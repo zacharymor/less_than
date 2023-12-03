@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Generate Playlist</title>
+</head>
+<body>
+    <h1>Select a Playlist</h1>
+    <form action="/generate" method="post">
+        <select name="playlist_id">
+            {% for playlist in playlists %}
+                <option value="{{ playlist.id }}">{{ playlist.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Select Playlist">
+    </form>
+
+    {% if selected_playlist %}
+        <h2>Selected Playlist: {{ selected_playlist.name }}</h2>
+        <p>Number of Tracks: {{ selected_playlist.tracks | length }}</p>
+        <p>Total Duration: {{ total_duration }} minutes</p>
+
+        <h3>Filtered Tracks</h3>
+        <ul>
+            {% for track in filtered_tracks %}
+                <li>{{ track['track']['name'] }}</li>
+            {% endfor %}
+        </ul>
+
+        <div>
+            <h3>{{ playlist.name }}</h3>
+            <button onclick="generatePlaylist('{{ playlist.id }}')">Generate Playlist</button>
+        </div>
+
+    {% endif %}
+    <script>
+        function generatePlaylist(playlistId) {
+            fetch('/create-playlist/' + playlistId, { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                alert('Playlist Generated: ' + data.new_playlist_name);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+        
+</body>
+</html>

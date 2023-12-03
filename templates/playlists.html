@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Playlists</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .toolbar {
+            background-color: #f0f0f0;
+            padding: 20px;
+            height: 33vh;
+            display: flex;
+            justify-content: space-between;
+        }
+        .column {
+            flex: 1;
+            padding: 10px;
+        }
+        .playlists-container {
+            height: 67vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .playlist-item {
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <div class="column" id="selected-playlist-column">
+            <h2 id="selected-playlist-name">Select a Playlist</h2>
+            <p id="playlist-stats"></p>
+        </div>
+        <div class="column" id="preview-playlist-column">
+            <h2>Preview</h2>
+            <p id="preview-stats"></p>
+            <button id="generatePlaylistBtn">Generate Playlist</button>
+        </div>
+    </div>
+    <div class="playlists-container">
+        <h1>My Spotify Playlists</h1>
+        <div class="column">
+            <h2>Liked Songs</h2>
+            <button id="generatePlaylistFromLikedBtn">Generate Playlist from Liked Songs</button>
+        </div>        
+        <ul>
+            {% for playlist in playlists %}
+            <li class="playlist-item" onclick="selectPlaylist('{{ playlist.name }}', {{ playlist.tracks.total }}, '{{ playlist.href }}')">
+                <strong>{{ playlist.name }}</strong> - {{ playlist.tracks.total }} tracks
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        function selectPlaylist(name, totalTracks, playlistHref) {
+            document.getElementById('selected-playlist-name').innerText = name;
+            document.getElementById('playlist-stats').innerText = totalTracks + ' Tracks';
+    
+            const playlistId = playlistHref.split('/').pop();
+            fetch('/playlist-stats/' + playlistId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error fetching playlist stats:', data.error);
+                        return;
+                    }
+                    const selectedStats = `Total Duration: ${data.total_duration_min} min, 
+                                        Min Track Length: ${data.min_track_length_sec} sec, 
+                                        Max Track Length: ${data.max_track_length_sec} sec`;
+                    document.getElementById('playlist-stats').innerText += '\n' + selectedStats;
+    
+                    const filteredStats = `Filtered Total Duration: ${data.filtered_total_duration_min} min, 
+                                        Filtered Min Track Length: ${data.filtered_min_track_length_sec} sec, 
+                                        Filtered Max Track Length: ${data.filtered_max_track_length_sec} sec`;
+                    document.getElementById('preview-stats').innerText = filteredStats;
+    
+                    document.getElementById('create-playlist-link').style.display = 'block';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function generatePlaylist(playlistId) {
+            fetch('/create-playlist/' + playlistId, { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                alert('Playlist Generated: ' + data.new_playlist_name);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        
+        document.getElementById('generatePlaylistFromLikedBtn').addEventListener('click', function() {
+            fetch('/generate-playlist-from-liked', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    console.log(data);
+                    alert('Playlist Generated: ' + data.new_playlist_name);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('generatePlaylistBtn').addEventListener('click', function() {
+            // Call the Flask route to generate the playlist
+            fetch('/generate-playlist', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                alert('Playlist Generated: ' + data.new_playlist_name);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+    </script>
+    
+</body>
+</html>
