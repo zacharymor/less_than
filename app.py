@@ -201,7 +201,7 @@ def generate():
     spotify_service = SpotifyService(token_info['access_token'])
     playlists = spotify_service.get_my_playlists()
 
-    return render_template('playlists.html', playlists=playlists['items'])
+    return render_template('generate.html', playlists=playlists['items'])
 
 
 # ------------------------------
